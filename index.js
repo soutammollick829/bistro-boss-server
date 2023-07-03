@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 require("dotenv").config();
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const cors = require("cors");
 const port = process.env.PORT || 5000;
 
@@ -31,12 +31,25 @@ async function run() {
 
     const menuCollation = client.db("bossDB").collection("menu");
     const cartsCollation = client.db("bossDB").collection("carts");
-
+    const usersCollation = client.db("bossDB").collection("users");
+//menu related api
     app.get("/menu", async (req, res) => {
       const result = await menuCollation.find().toArray();
       res.send(result);
     });
+// users related api
+app.get('/users', async(req,res)=>{
+  const result = await usersCollation.find().toArray();
+  res.send(result);
+})
 
+
+app.post('/users', async(req,res)=>{
+  const user = req.body;
+  const result = await usersCollation.insertOne(user);
+  res.send(result);
+})
+// carts related api
     app.get("/carts", async(req, res) => {
       const email = req.query.email;
       if(!email){
@@ -46,13 +59,22 @@ async function run() {
       const result = await cartsCollation.find(query).toArray();
       res.send(result);
     });
-
+// post related api
     app.post("/carts", async (req, res) => {
       const item = req.body;
       console.log(item);
       const result = await cartsCollation.insertOne(item);
       res.send(result);
     });
+
+    // delete related api....
+
+    app.delete('/carts/:id', async(req,res)=>{
+      const id = req.params.id;
+      const query = {_id: new ObjectId(id)};
+      const result = await cartsCollation.deleteOne(query);
+      res.send(result);
+    })
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log(
